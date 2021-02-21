@@ -13,4 +13,4 @@ def print_pkt(pkt):
 # pkt = sniff(iface='br-cf084e3006a0', filter='icmp', prn=print_pkt)
 
 
-pkt = sniff(iface='br-cf084e3006a0', filter='net 128.230.0.0/16', prn=print_pkt)
+pkt = sniff(iface='br-a60dbcb07b3c', filter='net 128.230.0.0/16', prn=print_pkt)
