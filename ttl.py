@@ -4,19 +4,23 @@ from scapy.all import *
 from scapy.layers.inet import *
 from scapy.all import *
 
-import time
-
-resp = []
-for t in range(1, 30):
-    ip = IP(src="10.9.0.1", dst='8.8.8.8', ttl=t, id=RandShort())
-    ts = time.time()
-    r = sr1(ip / ICMP(), retry=1, timeout=3)
-    te = time.time()
-    resp.append((t, r, (te - ts) * 1000))
-    if r and r.src == '8.8.8.8':
-        break
-print(len(resp), 'responses')
-
+for i in range(1, 28):
+    a = IP(dst="8.8.8.8", ttl=i)
+    b = ICMP()
+    p = a/b
+    send(p)
+# import time
+#
+# resp = []
+# for t in range(1, 30):
+#     ip = IP(src="10.9.0.5", dst='8.8.8.8', ttl=t, id=RandShort())
+#     ts = time.time()
+#     r = sr1(ip / ICMP(), retry=1, timeout=3)
+#     te = time.time()
+#     resp.append((t, r, (te - ts) * 1000))
+#     if r and r.src == '8.8.8.8':
+#         break
+# print(len(resp), 'responses')
 # hostname = "google.com"
 # for i in range(1, 28):
 #     pkt = IP(dst=hostname, ttl=i) / UDP(dport=33434)
