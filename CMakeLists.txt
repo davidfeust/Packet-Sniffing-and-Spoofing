@@ -3,4 +3,4 @@ project(PniffingAndSpoofing C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(PniffingAndSpoofing main.c)
+add_executable(Pcap pcap_sniffer.c)

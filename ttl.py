@@ -4,11 +4,13 @@ from scapy.all import *
 from scapy.layers.inet import *
 from scapy.all import *
 
+a = IP(dst="8.8.8.8")
+b = ICMP()
 for i in range(1, 28):
-    a = IP(dst="8.8.8.8", ttl=i)
-    b = ICMP()
-    p = a/b
+    a.ttl = i
+    p = a / b
     send(p)
+
 # import time
 #
 # resp = []
