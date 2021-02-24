@@ -1,13 +1,14 @@
-//
-// Created by david on 2/24/21.
-//
-
-// icmp.cpp
-// Robert Iakobashvili for Ariel uni, license BSD/MIT/Apache
-//
-// Sending ICMP Echo Requests using Raw-sockets.
-//
-
+#include <stdio.h>
+#include <pcap.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <pcap/pcap.h>
+#include "packet_heder.h"
+#include <netinet/in.h>
+#include<string.h>
+#include<sys/socket.h>
+#include<arpa/inet.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -19,27 +20,34 @@
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <sys/time.h> // gettimeofday()
-#include <netdb.h>
-#include <fcntl.h>
-#include "packet_heder.h"
-
-
 // IPv4 header len without options
 #define IP4_HDRLEN 20
 
 // ICMP header len for echo req
 #define ICMP_HDRLEN 8
+void sniffAndSpoof();
 
-// Checksum algo
-unsigned short calculate_checksum(unsigned short *paddress, int len);
+int spoof(char src[16], char dst[16]);
 
-// i.e the gateway or ping to google.com for their ip-address
-#define SRC_IP "8.8.8.8"
-//#define DESTINATION_IP "10.9.0.5"
-#define DESTINATION_IP "160.153.129.23"
+void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+    ethernet_h *ethernetH = (ethernet_h *) (packet);
+    ip_h *ipH = (ip_h *) (packet + SIZE_ETHERNET);
+    unsigned int size_ip = IP_HL(ipH) * 4;
+    if (size_ip < 20) {
+        printf("\t*Invalid IP header length: %u bytes\n\n", size_ip);
+        return;
+    }
 
-int main() {
+    char src[INET_ADDRSTRLEN];
+    char dst[INET_ADDRSTRLEN];
+    printf("**Got Packet**\n");
+    inet_ntop(AF_INET, &(ipH->ip_src.s_addr), src, INET_ADDRSTRLEN);
+    inet_ntop(AF_INET, &(ipH->ip_dst.s_addr), dst, INET_ADDRSTRLEN);
+    printf("host: %s \ndest: %s\n", src, dst);
+    spoof(src,dst);
+}
+
+int spoof(char src[16], char dst[16]) {
     struct ip iphdr; // IPv4 header
     struct icmp icmphdr; // ICMP-header
     char data[IP_MAXPACKET] = "This is the spoofed packets!\n";
@@ -91,27 +99,23 @@ int main() {
     iphdr.ip_p = IPPROTO_ICMP;
 
     // Source IP
-    if (inet_pton(AF_INET, SRC_IP, &(iphdr.ip_src)) <= 0) {
+    if (inet_pton(AF_INET, dst, &(iphdr.ip_src)) <= 0) {
         fprintf(stderr, "inet_pton() failed for source-ip with error: %d", errno);
         return -1;
     }
 
     // Destination IPv
-    if (inet_pton(AF_INET, DESTINATION_IP, &(iphdr.ip_dst)) <= 0) {
+    if (inet_pton(AF_INET, src, &(iphdr.ip_dst)) <= 0) {
         fprintf(stderr, "inet_pton() failed for destination-ip with error: %d", errno);
         return -1;
     }
-
-    // IPv4 header checksum (16 bits): set to 0 prior to calculating in order not to include itself.
-    iphdr.ip_sum = 0;
-    iphdr.ip_sum = calculate_checksum((unsigned short *) &iphdr, IP4_HDRLEN);
 
     //===================
     // ICMP header
     //===================
 
     // Message Type (8 bits): ICMP_ECHO_REQUEST; ICMP Type: 8 is request, 0 is reply.
-    icmphdr.icmp_type = 8;
+    icmphdr.icmp_type = 0;
 
     // Message Code (8 bits): echo request
     icmphdr.icmp_code = 0;
@@ -140,15 +144,14 @@ int main() {
     memcpy(packet + IP4_HDRLEN + ICMP_HDRLEN, data, data_len);
 
     // Calculate the ICMP header checksum
-    icmphdr.icmp_cksum = calculate_checksum((unsigned short *) (packet + IP4_HDRLEN), ICMP_HDRLEN + data_len);
-    memcpy(packet + IP4_HDRLEN, &icmphdr, ICMP_HDRLEN);
+//    icmphdr.icmp_cksum = calculate_checksum((unsigned short *) (packet + IP4_HDRLEN), ICMP_HDRLEN + data_len);
+//    memcpy(packet + IP4_HDRLEN, &icmphdr, ICMP_HDRLEN);
 
     struct sockaddr_in dest_in;
     memset(&dest_in, 0, sizeof(struct sockaddr_in));
     dest_in.sin_family = AF_INET;
 
 //     The port is irrelant for Networking and therefore was zeroed.
-//    dest_in.sin_addr.s_addr = inet_addr(DESTINATION_IP);
     dest_in.sin_addr.s_addr = iphdr.ip_dst.s_addr;
 
     // Create raw socket for IP-RAW (make IP-header by yourself)
@@ -166,34 +169,52 @@ int main() {
         fprintf(stderr, "sendto() failed with error: %d", errno);
         return -1;
     }
-    printf("Sent to %s\n", DESTINATION_IP);
+    printf("Sent a spoof packet:\nfrom: %s\nto: %s\n\n", dst, src);
 
     // Close the raw socket descriptor.
     close(sock);
-    return 0;
 }
 
-// Compute checksum (RFC 1071).
-unsigned short calculate_checksum(unsigned short *paddress, int len) {
-    int nleft = len;
-    int sum = 0;
-    unsigned short *w = paddress;
-    unsigned short answer = 0;
+void sniffAndSpoof() {
+    pcap_t *handle;
+    char errbuf[PCAP_ERRBUF_SIZE];
 
-    while (nleft > 1) {
-        sum += *w++;
-        nleft -= 2;
+    struct bpf_program fp;
+    char *dev = "br-df6015565bd5";
+    char filter_exp_icmp[] = "icmp";
+    bpf_u_int32 net = 0;
+    bpf_u_int32 mask = 0;
+
+// Open live pcap session on NIC with name eth3
+    handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
+    if (handle == NULL) {
+        fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+        exit(-1);
     }
-
-    if (nleft == 1) {
-        *((unsigned char *) &answer) = *((unsigned char *) w);
-        sum += answer;
+    if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
+        fprintf(stderr, "Can't get netmask for device %s\n", dev);
+        net = 0;
+        mask = 0;
     }
+// Step 2: Compile filter_exp into BPF psuedo-code
+    int compile = pcap_compile(handle, &fp, filter_exp_icmp, 1, net);
+    if (compile == -1) {
+        fprintf(stderr, "Couldn't compile device %s: %s\n", dev, errbuf);
+        exit(-1);
+    }
+    int setfilter = pcap_setfilter(handle, &fp);
+    if (setfilter == -1) {
+        fprintf(stderr, "setfilter dose not work properly %s\n", errbuf);
+        exit(-1);
+    }
+// Capture packets
+    pcap_loop(handle, 1, got_packet, NULL);
+    pcap_close(handle); //Close the handle
+}
 
-    // add back carry outs from top 16 bits to low 16 bits
-    sum = (sum >> 16) + (sum & 0xffff); // add hi 16 to low 16
-    sum += (sum >> 16);                 // add carry
-    answer = ~sum;                      // truncate to 16 bits
-
-    return answer;
+int main() {
+    while(1){
+        sniffAndSpoof();
+    }
+    return 0;
 }

@@ -54,7 +54,7 @@ int main() {
     // Type of service (8 bits) - not using, zero it.
     iphdr.ip_tos = 0;
 
-    // Total length of datagram (16 bits): IP header + ICMP data
+    // Total length of datagram (16 bits):
     iphdr.ip_len = htons(IP4_HDRLEN + data_len);
 
     // ID sequence number (16 bits): not in use since we do not allow fragmentation
