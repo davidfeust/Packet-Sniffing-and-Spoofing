@@ -19,6 +19,9 @@
 #                            library e.g. required by pf_ring's libpcap)
 #  HAVE_PF_RING              If a found version of libpcap supports PF_RING
 
+#add_executable(Spf spoof_icmp.c)
+
+
 find_path(PCAP_ROOT_DIR
         NAMES include/pcap.h
         )

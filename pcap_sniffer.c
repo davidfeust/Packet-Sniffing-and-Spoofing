@@ -39,12 +39,8 @@ int main() {
     pcap_t *handle;
     char errbuf[PCAP_ERRBUF_SIZE];
 
-    struct bpf_program fp;
-    char filter_exp[] = "IPPROTO_ICMP"; //"ip proto icmp";
-    bpf_u_int32 net = 0;
-
 // Open live pcap session on NIC with name eth3
-    handle = pcap_open_live("ens33", BUFSIZ, 1, 1000, errbuf);
+    handle = pcap_open_live("br-df6015565bd5", BUFSIZ, 1, 1000, errbuf);
 
 // Capture packets
     pcap_loop(handle, -1, got_packet, NULL);

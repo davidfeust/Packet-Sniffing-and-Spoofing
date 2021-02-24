@@ -4,7 +4,9 @@ set(CMAKE_C_STANDARD 99)
 
 include(FindPCAP.cmake)
 
-add_executable(Pcap pcap_sniffer.c packet_heder.h)
+add_executable(Pcap spoof.c packet_heder.h)
+add_executable(SpfICMP spoof_icmp.c)
+add_executable(SpfIP spoof_ip.c)
 
 
 #SET(CMAKE_MODULE_PATH "/home/david/CLionProjects/SniffingAndSpoofing")
