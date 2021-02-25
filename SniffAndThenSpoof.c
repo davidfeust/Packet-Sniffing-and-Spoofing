@@ -1,33 +1,28 @@
 #include <stdio.h>
-#include <pcap.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <pcap/pcap.h>
 #include "packet_heder.h"
 #include <netinet/in.h>
 #include<string.h>
 #include<sys/socket.h>
 #include<arpa/inet.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#include <arpa/inet.h>
 #include <errno.h>
+
 // IPv4 header len without options
 #define IP4_HDRLEN 20
 
 // ICMP header len for echo req
 #define ICMP_HDRLEN 8
+
+
 void sniffAndSpoof();
 
 int spoof(char src[16], char dst[16]);
+
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
     ethernet_h *ethernetH = (ethernet_h *) (packet);
@@ -110,6 +105,7 @@ int spoof(char src[16], char dst[16]) {
         return -1;
     }
 
+
     //===================
     // ICMP header
     //===================
@@ -143,19 +139,14 @@ int spoof(char src[16], char dst[16]) {
     // After ICMP header, add the ICMP data.
     memcpy(packet + IP4_HDRLEN + ICMP_HDRLEN, data, data_len);
 
-    // Calculate the ICMP header checksum
-//    icmphdr.icmp_cksum = calculate_checksum((unsigned short *) (packet + IP4_HDRLEN), ICMP_HDRLEN + data_len);
-//    memcpy(packet + IP4_HDRLEN, &icmphdr, ICMP_HDRLEN);
-
     struct sockaddr_in dest_in;
     memset(&dest_in, 0, sizeof(struct sockaddr_in));
     dest_in.sin_family = AF_INET;
 
-//     The port is irrelant for Networking and therefore was zeroed.
+    // The port is irrelant for Networking and therefore was zeroed.
     dest_in.sin_addr.s_addr = iphdr.ip_dst.s_addr;
 
     // Create raw socket for IP-RAW (make IP-header by yourself)
-
     int sock = -1;
     if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1) { // IPPROTO_RAW  IPPROTO_ICMP
         fprintf(stderr, "socket() failed with error: %d", errno);
@@ -173,6 +164,7 @@ int spoof(char src[16], char dst[16]) {
 
     // Close the raw socket descriptor.
     close(sock);
+    return 0;
 }
 
 void sniffAndSpoof() {

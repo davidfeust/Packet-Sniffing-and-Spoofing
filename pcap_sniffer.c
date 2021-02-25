@@ -8,9 +8,9 @@
 
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
-    ethernet_h *ethernetH = (ethernet_h *) (packet);
     ip_h *ipH = (ip_h *) (packet + SIZE_ETHERNET);
     unsigned int size_ip = IP_HL(ipH) * 4;
+
     if (size_ip < 20) {
         printf("\t*Invalid IP header length: %u bytes\n\n", size_ip);
         return;
@@ -22,17 +22,6 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     inet_ntop(AF_INET, &(ipH->ip_src.s_addr), src, INET_ADDRSTRLEN);
     inet_ntop(AF_INET, &(ipH->ip_dst.s_addr), dst, INET_ADDRSTRLEN);
     printf("host: %s \ndest: %s\n\n", src, dst);
-
-/*
-    tcp_h *tcpH = (tcp_h*)(packet + SIZE_ETHERNET + size_ip);
-    unsigned int size_tcp = TH_OFF(tcpH)*4;
-    if (size_tcp < 20) {
-
-        printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
-        return;
-    }
-    unsigned char *payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
-*/
 }
 
 int main() {

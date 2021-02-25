@@ -1,28 +1,29 @@
-
-
 #include <stdio.h>
 #include <pcap/pcap.h>
 #include "packet_heder.h"
 #include <netinet/in.h>
 #include<string.h>
-#include<sys/socket.h>
-#include<arpa/inet.h>
 #include <stdlib.h>
 
 
+/// Task 2.1C: Sniffing Passwords.
+/// In this sniffer program we capture the password
+/// when somebody is using telnet on the network that we are monitoring.
+/// our sniffer program has been modified from the previous sniffer
+/// to capture only tcp packets  and to print out the data part
+/// of a captured TCP packet (telnet uses TCP).
+/// we print out the entire data part,
+/// and then manually mark where the password is.
+
+
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
-    ethernet_h *ethernetH = (ethernet_h *) (packet);
     ip_h *ipH = (ip_h *) (packet + SIZE_ETHERNET);
     unsigned int size_ip = IP_HL(ipH) * 4;
     if (size_ip < 20) {
-//        printf("\t*Invalid IP header length: %u bytes\n\n", size_ip);
+        printf("\t*Invalid IP header length: %u bytes\n\n", size_ip);
         return;
     }
 
-    char src[INET_ADDRSTRLEN];
-    char dst[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(ipH->ip_src.s_addr), src, INET_ADDRSTRLEN);
-    inet_ntop(AF_INET, &(ipH->ip_dst.s_addr), dst, INET_ADDRSTRLEN);
 
     tcp_h *tcpH = (tcp_h *) (packet + SIZE_ETHERNET + size_ip);
     unsigned int size_tcp = TH_OFF(tcpH) * 4;
@@ -31,6 +32,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     }
     unsigned char *data = (u_char *) (packet + SIZE_ETHERNET + size_ip + size_tcp);
     unsigned int size_data = ntohs(ipH->ip_len) - (size_ip + size_tcp);
+    //printing all the data that we collected form the sniffed packets
     if (size_data != 0) {
         for (int i = 0; i < size_data; ++i) {
             printf("%c", data[i]);
@@ -38,17 +40,17 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     }
 }
 
+
 int main() {
     pcap_t *handle;
     char errbuf[PCAP_ERRBUF_SIZE];
-
     struct bpf_program fp;
-    char *dev = "br-df6015565bd5";
+    char *dev = "br-39c93a2e3df3";
     char filter_exp_tcp[] = "tcp";
     bpf_u_int32 net = 0;
     bpf_u_int32 mask = 0;
 
-// Open live pcap session on NIC with name eth3
+// Open live pcap session on NIC with name dev
     handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
         fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
@@ -59,7 +61,8 @@ int main() {
         net = 0;
         mask = 0;
     }
-// Step 2: Compile filter_exp into BPF psuedo-code
+
+// Compile filter_exp into tcp filter in BPF
     int compile = pcap_compile(handle, &fp, filter_exp_tcp, 1, net);
     if (compile == -1) {
         fprintf(stderr, "Couldn't compile device %s: %s\n", dev, errbuf);
@@ -70,8 +73,11 @@ int main() {
         fprintf(stderr, "setfilter dose not work properly %s\n", errbuf);
         exit(-1);
     }
+
 // Capture packets
     pcap_loop(handle, -1, got_packet, NULL);
-    pcap_close(handle); //Close the handle
+
+// Close the handle
+    pcap_close(handle);
     return 0;
 }
