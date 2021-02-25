@@ -4,21 +4,13 @@
 
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <sys/time.h> // gettimeofday()
-#include <netdb.h>
-#include <fcntl.h>
-#include "packet_heder.h"
-
 
 // IPv4 header len without options
 #define IP4_HDRLEN 20
@@ -36,9 +28,7 @@ unsigned short calculate_checksum(unsigned short *paddress, int len);
 
 int main() {
     struct ip iphdr; // IPv4 header
-//    struct icmp icmphdr; // ICMP-header
     char data[IP_MAXPACKET] = "This is the spoofed IP packets!\n";
-
     unsigned int data_len = strlen(data) + 1;
 
     //==================
@@ -100,6 +90,10 @@ int main() {
     iphdr.ip_sum = 0;
     iphdr.ip_sum = calculate_checksum((unsigned short *) &iphdr, IP4_HDRLEN);
 
+    //=============================
+    // Encapsulation of the packet
+    //=============================
+
     // Combine the packet
     char packet[IP_MAXPACKET];
 
@@ -124,7 +118,6 @@ int main() {
         fprintf(stderr, "To create a raw socket, the process needs to be run by Admin/root user.\n\n");
         return -1;
     }
-
 
     // Send the packet using sendto() for sending datagrams.
     if (sendto(sock, packet, IP4_HDRLEN + data_len, 0,

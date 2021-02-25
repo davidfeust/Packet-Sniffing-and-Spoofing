@@ -127,6 +127,10 @@ int spoof(char src[16], char dst[16]) {
     // ICMP header checksum (16 bits): set to 0 not to include into checksum calculation
     icmphdr.icmp_cksum = 0;
 
+    //=============================
+    // Encapsulation of the packet
+    //=============================
+
     // Combine the packet
     char packet[IP_MAXPACKET];
 

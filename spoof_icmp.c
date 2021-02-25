@@ -2,28 +2,15 @@
 // Created by david on 2/24/21.
 //
 
-// icmp.cpp
-// Robert Iakobashvili for Ariel uni, license BSD/MIT/Apache
-//
-// Sending ICMP Echo Requests using Raw-sockets.
-//
-
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <sys/time.h> // gettimeofday()
-#include <netdb.h>
-#include <fcntl.h>
-#include "packet_heder.h"
-
 
 // IPv4 header len without options
 #define IP4_HDRLEN 20
@@ -66,7 +53,6 @@ int main() {
     iphdr.ip_id = 0;
 
     // Fragmentation bits - we are sending short packets below MTU-size and without
-    // fragmentation
     int ip_flags[4];
 
     // Reserved bit
@@ -127,6 +113,10 @@ int main() {
     // ICMP header checksum (16 bits): set to 0 not to include into checksum calculation
     icmphdr.icmp_cksum = 0;
 
+    //=============================
+    // Encapsulation of the packet
+    //=============================
+
     // Combine the packet
     char packet[IP_MAXPACKET];
 
@@ -148,7 +138,6 @@ int main() {
     dest_in.sin_family = AF_INET;
 
 //     The port is irrelant for Networking and therefore was zeroed.
-//    dest_in.sin_addr.s_addr = inet_addr(DESTINATION_IP);
     dest_in.sin_addr.s_addr = iphdr.ip_dst.s_addr;
 
     // Create raw socket for IP-RAW (make IP-header by yourself)
