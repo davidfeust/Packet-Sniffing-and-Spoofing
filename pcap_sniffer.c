@@ -8,6 +8,7 @@
 
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+//    Decapsulation of the packet in order to get from it the data that we want
     ip_h *ipH = (ip_h *) (packet + SIZE_ETHERNET);
     unsigned int size_ip = IP_HL(ipH) * 4;
 
