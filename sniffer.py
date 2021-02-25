@@ -13,8 +13,6 @@ icmp_filter = 'icmp'
 port_filter_tcp = 'tcp and src host 10.9.0.5 and dst port 23'
 net_filter = 'net 128.0.0.0/1'
 
-
-
 pkt = sniff(iface=interface, filter=net_filter, prn=print_pkt)
 
 pkt = sniff(iface=interface, filter=port_filter_tcp, prn=print_pkt)
