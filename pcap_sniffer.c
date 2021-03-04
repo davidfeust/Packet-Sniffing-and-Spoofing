@@ -30,10 +30,15 @@ int main() {
     char errbuf[PCAP_ERRBUF_SIZE];
 
 // Open live pcap session on NIC with name eth3
-    handle = pcap_open_live("br-df6015565bd5", BUFSIZ, 1, 1000, errbuf);
+    handle = pcap_open_live(INTERFACE, BUFSIZ, 1, 1000, errbuf);
 
 // Capture packets
     pcap_loop(handle, -1, got_packet, NULL);
     pcap_close(handle); //Close the handle
     return 0;
 }
+
+/*
+ * for testing run from host:
+ * ping 8.8.8.8 -c 1
+ */

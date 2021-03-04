@@ -5,6 +5,10 @@
 #ifndef SNIFFINGANDSPOOFING_PACKET_HEDER_H
 #define SNIFFINGANDSPOOFING_PACKET_HEDER_H
 
+// **** Change here the interface: ****
+#define INTERFACE "br-433da50f02bf"
+//#define INTERFACE "ens33"
+
 /* Ethernet addresses are 6 bytes */
 #define ETHER_ADDR_LEN    6
 

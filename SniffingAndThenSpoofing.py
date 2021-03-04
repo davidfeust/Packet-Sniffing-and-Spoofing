@@ -2,6 +2,7 @@
 from scapy.layers.inet import IP, ICMP
 from scapy.packet import Raw
 from scapy.sendrecv import sniff, AsyncSniffer, send
+from header import *
 
 '''
 In this task, we have been asked to sniff and spoof packets.
@@ -16,14 +17,14 @@ the ping program will always receive a reply, indicating that X is alive.
 '''
 
 # sniff the packets
-pkt = sniff(iface='br-9b889cd55d52', count=1, filter='icmp and src host 10.9.0.5')
+pkt = sniff(iface=INTERFACE, count=1, filter='icmp and src host 10.9.0.5')
 
 dest = 0
 source = 0
 # collect the information from the packet
-if pkt[0].haslayer(IP):
-    ip_layer = pkt[0].ip_layer(IP)
-    icmp_layer = pkt[0].ip_layer(ICMP)
+if pkt[0].haslayer(IP) and pkt[0].haslayer(ICMP):
+    ip_layer = pkt[0].getlayer(IP)
+    icmp_layer = pkt[0].getlayer(ICMP)
 
     dest = ip_layer.dst
     source = ip_layer.src
@@ -35,7 +36,11 @@ if pkt[0].haslayer(IP):
     print(id_p, "id_p")
     print(seq, "seq")
 
-# send a spoof packet to the collected src ip
+    # send a spoof packet to the collected src ip
     a = IP(src=dest, dst=source)
     b = ICMP(type=0, id=id_p, seq=seq)
     send((a / b))  # /"-----------shallom----------"
+
+# run here: sudo python3 SniffingAndThenSpoofing.py
+# for testing run from host container:
+# ping 8.8.8.8 -c 1

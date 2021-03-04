@@ -1,5 +1,5 @@
-# # ttl.py
-#
+# ttl.py
+
 from time import sleep
 
 from scapy.layers.inet import *
@@ -21,3 +21,5 @@ for i in range(30):
     a.ttl = i
     p = a / b
     send(p)
+
+# run: sudo python3 ttl.py

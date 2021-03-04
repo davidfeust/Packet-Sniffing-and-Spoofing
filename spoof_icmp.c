@@ -23,8 +23,8 @@ unsigned short calculate_checksum(unsigned short *paddress, int len);
 
 // i.e the gateway or ping to google.com for their ip-address
 #define SRC_IP "8.8.8.8"
-//#define DESTINATION_IP "10.9.0.5"
-#define DESTINATION_IP "160.153.129.23"
+#define DESTINATION_IP "10.9.0.5"
+//#define DESTINATION_IP "160.153.129.23"
 
 int main() {
     struct ip iphdr; // IPv4 header
@@ -186,3 +186,8 @@ unsigned short calculate_checksum(unsigned short *paddress, int len) {
 
     return answer;
 }
+
+/*
+ * run spfICMP target with root privilege,
+ * or: gcc spoof_icmp.c -o spoof_icmp_exe && sudo ./spoof_icmp_exe
+ */

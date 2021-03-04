@@ -39,7 +39,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     inet_ntop(AF_INET, &(ipH->ip_src.s_addr), src, INET_ADDRSTRLEN);
     inet_ntop(AF_INET, &(ipH->ip_dst.s_addr), dst, INET_ADDRSTRLEN);
     printf("host: %s \ndest: %s\n", src, dst);
-    spoof(src,dst);
+    spoof(src, dst);
 }
 
 int spoof(char src[16], char dst[16]) {
@@ -176,7 +176,7 @@ void sniffAndSpoof() {
     char errbuf[PCAP_ERRBUF_SIZE];
 
     struct bpf_program fp;
-    char *dev = "br-df6015565bd5";
+    char *dev = INTERFACE;
     char filter_exp_icmp[] = "icmp";
     bpf_u_int32 net = 0;
     bpf_u_int32 mask = 0;
@@ -209,8 +209,17 @@ void sniffAndSpoof() {
 }
 
 int main() {
-    while(1){
+    while (1) {
         sniffAndSpoof();
     }
     return 0;
 }
+
+
+/*
+ * for testing run on debug mode or from regular terminal with sudo & -pcap,
+ * then from host container:
+ * ping 8.8.8.8 -c 1
+ * ping 1.2.3.4 -c 1
+ * ping 10.9.0.1 -c 1
+ */

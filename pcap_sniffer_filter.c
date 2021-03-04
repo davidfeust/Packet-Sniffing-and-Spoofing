@@ -30,9 +30,10 @@ int main() {
     char errbuf[PCAP_ERRBUF_SIZE];
 
     struct bpf_program fp;
-    char *dev = "br-df6015565bd5";
+    char *dev = INTERFACE;
     char filter_exp_icmp[] = "icmp and src host 10.9.0.5 and dst host 10.9.0.1";
     char filter_exp_tcp[] = "tcp dst portrange 10-100";
+    char filter_exp_tcp2[] = "tcp dst portrange 10-100 and src portrange 10-100";
     bpf_u_int32 net = 0;
     bpf_u_int32 mask = 0;
 
@@ -48,7 +49,7 @@ int main() {
         mask = 0;
     }
 // Step 2: Compile filter_exp into BPF psuedo-code
-    int compile = pcap_compile(handle, &fp, filter_exp_tcp, 1, net);
+    int compile = pcap_compile(handle, &fp, filter_exp_tcp2, 1, net);
     if (compile == -1) {
         fprintf(stderr, "Couldn't compile device %s: %s\n", dev, errbuf);
         exit(-1);
@@ -63,3 +64,16 @@ int main() {
     pcap_close(handle); //Close the handle
     return 0;
 }
+
+/*
+ * compile for icmp by:  gcc pcap_sniffer_filter.c -o /home/david/Labsetup/volumes/pcap_sniff_icmp_exe -lpcap
+ * compile for tcp range by:  gcc pcap_sniffer_filter.c -o /home/david/Labsetup/volumes/pcap_sniff_nprm_exe -lpcap
+ * compile for tcp2 range by:  gcc pcap_sniffer_filter.c -o /home/david/Labsetup/volumes/pcap_sniff_nprm_exe2 -lpcap
+ *
+ * for testing:
+ * run the ./cap_sniff_nprm_exe file from attacker container(david@ubuntu).
+ * and from host container:
+ * from scapy.all import *
+ * tcp: run from host on python3: send(IP(dst="10.9.0.1") / TCP(dport=50))
+ * icmp: run from host on python3: send(IP(dst="10.9.0.1") / ICMP())
+ */

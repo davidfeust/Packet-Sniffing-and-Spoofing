@@ -45,7 +45,7 @@ int main() {
     pcap_t *handle;
     char errbuf[PCAP_ERRBUF_SIZE];
     struct bpf_program fp;
-    char *dev = "br-39c93a2e3df3";
+    char *dev = INTERFACE;
     char filter_exp_tcp[] = "tcp";
     bpf_u_int32 net = 0;
     bpf_u_int32 mask = 0;
@@ -81,3 +81,10 @@ int main() {
     pcap_close(handle);
     return 0;
 }
+
+/*
+ * compile by: gcc pcap_sniffer_telnet_password.c -o /home/david/Labsetup/volumes/pcap_sniff_password_exe -lpcap
+ * from attacker(david@ubuntu): telnet localhost
+ * from attacker(david@ubuntu): run ./pcap_sniff_password_exe
+ * from host: telnet 10.9.0.1 23
+ */

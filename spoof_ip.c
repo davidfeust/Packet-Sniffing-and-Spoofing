@@ -156,3 +156,8 @@ unsigned short calculate_checksum(unsigned short *paddress, int len) {
 
     return answer;
 }
+
+/*
+ * run spfIP target with root privilege,
+ * or: gcc spoof_ip.c -o spoof_ip_exe && sudo ./spoof_ip_exe
+ */

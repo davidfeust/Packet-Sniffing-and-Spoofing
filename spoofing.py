@@ -12,3 +12,5 @@ b = ICMP()
 p = a / b
 send(p)
 p.show()
+
+# run: sudo python3 spoofing.py
